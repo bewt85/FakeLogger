@@ -1,4 +1,7 @@
-import random, numpy, datetime
+import random
+import numpy
+import datetime
+import re
 
 # Format
 # ip_address userId dateTime "request" status page_size referer deviceFingerprint
@@ -69,7 +72,7 @@ class Customer(object):
     self.history.append((self.time, transition))
 
   def createHistory(self, length=0):
-    while self.page and (length > 0 or len(self.history <= length)):
+    while self.page and (length == 0 or len(self.history) <= length):
       self.step()
 
   def formatHistory(self):
@@ -81,10 +84,10 @@ class Customer(object):
         "user": self.userId,
         "time": transitionTime.strftime("[%d/%b/%Y:%H:%M:%S +0000]"),
         "method": transition.method,
-        "destination": transition.destination.path,
+        "destination": re.sub(r':userId', self.userId, transition.destination.path),
         "status": transition.status,
         "size": transition.destination.size,
-        "source": transition.source.domain + transition.source.path,
+        "source": transition.source.domain + re.sub(r':userId', self.userId, transition.source.path),
         "fingerprint": self.deviceId
       }
       yield (transitionTime, "{ip} {user} {time} \"{method} {destination}\" {status} {size} \"{source}\" {fingerprint}".format(**logline_data))
@@ -111,7 +114,7 @@ class Page(object):
   def __init__(self, path, size=None, domain=None, quitProb=0.001):
     self.path = path
     self.domain = domain if domain else "www.example.com"
-    self.size = size if size else random.randint(200, 200000)
+    self.size = size if size else random.randint(200, 2000)
     self.quitProb = quitProb
     self.transitions = []
 
@@ -167,21 +170,30 @@ if __name__ == "__main__":
       self.assertEqual(self.customer.pick(transitions, 0.8), transitionBA)
       self.assertEqual(self.customer.pick(transitions, 1.0), transitionBA)
 
-  class HistoryTest(unittest.TestCode):
+  class HistoryTest(unittest.TestCase):
     def setUp(self):
       self.customer = Customer()
       self.pageA = Page('/pageA', quitProb=0.0)
       self.pageB = Page('/pageB', quitProb=0.0)
+      self.accountPage = Page('/account/:userId', quitProb=0.0)
     
     def test_singleTransition(self):
       self.pageA.addNextPage(self.pageB) 
       self.pageB.addNextPage(None)
-      self.customer.start(pageA)
+      self.customer.start(self.pageA)
       self.customer.createHistory(10) 
       self.assertEqual(len(self.customer.history), 2)
-      self.assertequal(self.customer.history[0][1].source, self.pageA)
-      self.assertequal(self.customer.history[0][1].destination, self.pageB)
-      self.assertequal(self.customer.history[1][1].source, self.pageB)
-      self.assertequal(self.customer.history[1][1].destination, None)
-
+      self.assertEqual(self.customer.history[0][1].source, self.pageA)
+      self.assertEqual(self.customer.history[0][1].destination, self.pageB)
+      self.assertEqual(self.customer.history[1][1].source, self.pageB)
+      self.assertEqual(self.customer.history[1][1].destination, None)
+    
+    def test_pageWithUserId(self):
+      ben = Customer()
+      ben.userId = "Ben"
+      self.pageA.addNextPage(self.accountPage) 
+      ben.start(self.pageA)
+      ben.createHistory(10) 
+      self.assertEqual("/account/Ben" in list(ben.formatHistory())[0][1], True)
+      
   unittest.main()

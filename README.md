@@ -14,7 +14,7 @@ create some fake history.
 
 ## Example usage
 
-```
+```python
 from FakeLogger import *
 
 # Create some pages
@@ -61,7 +61,7 @@ for line in map(second, sorted_history): # We only want to print the log lines
   print line
 ```
 
-## Extensions
+## Potential Extensions
 - log users in and out
 - log users out automatically if they're a bit slow
 - add fraudulent customers for example:

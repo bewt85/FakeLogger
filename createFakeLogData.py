@@ -5,28 +5,41 @@ import random, numpy, datetime
 # e.g.
 # 123.123.123.123 user_12345 [01/Aug/2014:00:00:00] "GET /foo/bar.html" 200 500 "www.example.com/foo/baz.html" device_12345
 
-numberOfCustomers = 1000
-
-ipAddressPool = ["{}.{}.{}.{}".format(random.randint(0,255), random.randint(0,255), random.randint(0,255), random.randint(0,255)) for i in range(numberOfCustomers * 2)]
-ipAddressPool = list(set(ipAddressPool))
-getNewRandomIp = ipAddressPool.pop
-
-userIdPool = ["user_{:0{width}}".format(i, width=8) for i in range(numberOfCustomers)]
-getNextUserId = userIdPool.pop
-
-deviceIdPool = ["device_{:0{width}}".format(i, width=8) for i in range(numberOfCustomers)]
-getNextDeviceId = deviceIdPool.pop
-
 class Customer(object):
+
+  used_ips = []
+  nextUserIndex = 1
+  nextDeviceIndex = 1
+
   def __init__(self):
-    self.ip = getNewRandomIp()
-    self.userId = getNextUserId()
-    self.deviceId = getNextDeviceId()
+    self.ip = self.getNewRandomIp()
+    self.userId = self.getNextUserId()
+    self.deviceId = self.getNextDeviceId()
 
   def start(self, page, time=None):
     self.page = page
     self.time = time if time else datetime.datetime.now()
     self.history = []
+
+  @classmethod
+  def getNewRandomIp(cls):
+    new_ip = "{}.{}.{}.{}".format(random.randint(0,255), random.randint(0,255), random.randint(0,255), random.randint(0,255))
+    while new_ip in cls.used_ips:
+      new_ip = "{}.{}.{}.{}".format(random.randint(0,255), random.randint(0,255), random.randint(0,255), random.randint(0,255))
+    cls.used_ips.append(new_ip)
+    return new_ip
+
+  @classmethod
+  def getNextUserId(cls):
+    userId = "user_{:0{width}}".format(cls.nextUserIndex, width=8)
+    cls.nextUserIndex += 1
+    return userId
+
+  @classmethod
+  def getNextDeviceId(cls):
+    deviceId = "device_{:0{width}}".format(cls.nextDeviceIndex, width=8)
+    cls.nextDeviceIndex += 1
+    return deviceId
 
   @classmethod
   def calculateCumulativeWeightedTransitions(cls, weighted_transitions):

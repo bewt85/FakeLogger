@@ -1,9 +1,9 @@
 import random, numpy, datetime
 
 # Format
-# ip_address userId dateTime "request" status page_size deviceFingerprint
+# ip_address userId dateTime "request" status page_size referer deviceFingerprint
 # e.g.
-# 123.123.123.123 user_12345 [01/Aug/2014:00:00:00] "GET /foo/bar.html" 200 500 device_12345
+# 123.123.123.123 user_12345 [01/Aug/2014:00:00:00] "GET /foo/bar.html" 200 500 "www.example.com/foo/baz.html" device_12345
 
 numberOfCustomers = 1000
 
@@ -71,9 +71,10 @@ class Customer(object):
         "destination": transition.destination.path,
         "status": transition.status,
         "size": transition.destination.size,
+        "source": transition.source.domain + transition.source.path,
         "fingerprint": self.deviceId
       }
-      yield (transitionTime, "{ip} {user} {time} \"{method} {destination}\" {status} {size} {fingerprint}".format(**logline_data))
+      yield (transitionTime, "{ip} {user} {time} \"{method} {destination}\" {status} {size} \"{source}\" {fingerprint}".format(**logline_data))
 
   def __repr__(self):
     return "User {}: ip = {}; device = {}".format(self.userId, self.ip, self.deviceId)

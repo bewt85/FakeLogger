@@ -79,18 +79,19 @@ class Customer(object):
     for (transitionTime, transition) in self.history:
       if transition.destination == None:
         return
-      logline_data = {
-        "ip": self.ip,
-        "user": self.userId,
-        "time": transitionTime.strftime("[%d/%b/%Y:%H:%M:%S +0000]"),
-        "method": transition.method,
-        "destination": re.sub(r':userId', self.userId, transition.destination.path),
-        "status": transition.status,
-        "size": transition.destination.size,
-        "source": transition.source.domain + re.sub(r':userId', self.userId, transition.source.path),
-        "fingerprint": self.deviceId
-      }
-      yield (transitionTime, "{ip} {user} {time} \"{method} {destination}\" {status} {size} \"{source}\" {fingerprint}".format(**logline_data))
+      if transition.destination.logged:
+        logline_data = {
+          "ip": self.ip,
+          "user": self.userId,
+          "time": transitionTime.strftime("[%d/%b/%Y:%H:%M:%S +0000]"),
+          "method": transition.method,
+          "destination": re.sub(r':userId', self.userId, transition.destination.path),
+          "status": transition.status,
+          "size": transition.destination.size,
+          "source": transition.source.domain + re.sub(r':userId', self.userId, transition.source.path),
+          "fingerprint": self.deviceId
+        }
+        yield (transitionTime, transition.destination.logtemplate.format(**logline_data))
 
   def __repr__(self):
     return "User {}: ip = {}; device = {}".format(self.userId, self.ip, self.deviceId)
@@ -111,11 +112,13 @@ class Transition(object):
     )
 
 class Page(object):
-  def __init__(self, path, size=None, domain=None, quitProb=0.001):
+  def __init__(self, path, size=None, domain=None, quitProb=0.001, logged=True, logtemplate=None):
     self.path = path
     self.domain = domain if domain else "www.example.com"
     self.size = size if size else random.randint(200, 2000)
     self.quitProb = quitProb
+    self.logged = logged
+    self.logtemplate = logtemplate if logtemplate else "{ip} {user} {time} \"{method} {destination}\" {status} {size} \"{source}\" {fingerprint}"
     self.transitions = []
 
   def addNextPage(self, page, method='GET', status=None, timeBeforePageChange=120.0, likelyhoodWeight=1):

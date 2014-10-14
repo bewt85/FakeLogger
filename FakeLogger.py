@@ -100,7 +100,7 @@ class Transition(object):
     self.source = source
     self.destination = destination
     self.method = method
-    self.timeBeforePageChange=120
+    self.timeBeforePageChange = timeBeforePageChange
     defaultStatus = {'GET': 200, 'POST': 201, 'PUT': 200}
     self.status = status if status else defaultStatus.get(method, 200)
 

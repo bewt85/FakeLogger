@@ -68,7 +68,7 @@ class Customer(object):
       return
     transition = self.pick(self.page.transitions, random.random())
     self.page = transition.destination
-    self.time += datetime.timedelta(0,numpy.random.poisson(transition.timeBeforePageChange))
+    self.time += datetime.timedelta(0,max(0,random.gauss(transition.timeBeforePageChange,transition.timeBeforePageChange/4)))
     self.history.append((self.time, transition))
 
   def createHistory(self, length=0):

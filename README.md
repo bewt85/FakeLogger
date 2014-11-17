@@ -12,6 +12,9 @@ page visits more realistic.
 Once you have a fake website, you create some fake customers and use them to 
 create some fake history.
 
+### Status
+[![Build Status](https://travis-ci.org/bewt85/FakeLogger.svg?branch=master)](https://travis-ci.org/bewt85/FakeLogger)
+
 ## Example usage
 
 ```python
